@@ -5,7 +5,7 @@ const bodyParser= require('body-parser');
 const expressValidator = require('express-validator');
 const flash = require('connect-flash');
 const session =require('express-session');
-
+const {check,validationResult}=require('express-validator/check');
 
 mongoose.connect('mongodb://localhost/nodekb');
 let db = mongoose.connection;
@@ -34,25 +34,9 @@ app.set('view engine','pug');
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 
+
 // parse application/json
 app.use(bodyParser.json());
-
-//Set public folder
-app.use(express.static(path.join(__dirname,'public')));
-
-//Express Session Middleware
-app.use(session({
-  secret: 'keyboard cat',
-  resave: true,
-  saveUninitialized: true
-}));
-
-//Express Messages Middleware
-app.use(require('connect-flash')());
-app.use(function (req, res, next) {
-  res.locals.messages = require('express-messages')(req, res);
-  next();
-});
 
 //Express Validator Middleware
 app.use(expressValidator({
@@ -71,6 +55,25 @@ app.use(expressValidator({
     };
   }
 }));
+
+//Set public folder
+app.use(express.static(path.join(__dirname,'public')));
+
+//Express Session Middleware
+app.use(session({
+  secret: 'keyboard cat',
+  resave: true,
+  saveUninitialized: true
+}));
+
+//Express Messages Middleware
+app.use(require('connect-flash')());
+app.use(function (req, res, next) {
+  res.locals.messages = require('express-messages')(req, res);
+  next();
+});
+
+//Express validator iddle ware was here
 
 //home route
 app.get('/', function(req, res){
@@ -107,12 +110,11 @@ app.get('/articles/add',function(req,res){
 
 
 //Add submit post route
-app.post('/articles/add',function(req,res){
-
-
-  //req.CheckBody('title','Event Title is required').notEmpty();
-  //req.CheckBody('author','College is required').notEmpty();
-  //req.CheckBody('body','Info is required').notEmpty();
+app.post('/articles/add',[
+  check('title',).not().isEmpty().withMessage('ADD event title'),
+  check('author','College is required').not().isEmpty(),
+  check('body','Info is required').not().isEmpty(),
+], function(req,res){
 
   //Get Error
   let errors= req.validationErrors();
@@ -122,6 +124,7 @@ app.post('/articles/add',function(req,res){
       title:'Add Events',
       errors:errors
     });
+
   } else{
     let article =new Article();
     article.title =req.body.title;
