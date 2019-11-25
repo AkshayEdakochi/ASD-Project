@@ -6,9 +6,10 @@ const expressValidator = require('express-validator');
 const flash = require('connect-flash');
 const session =require('express-session');
 const {check,validationResult}=require('express-validator/check');
+const passport = require('passport');
 const config= require('./config/database');
 
-mongoose.connect('mongodb://localhost/nodekb');
+mongoose.connect(config.database);
 
 let db = mongoose.connection;
 
@@ -58,6 +59,15 @@ app.use(expressValidator({
   }
 }));
 
+//Passport config
+require('./config/passport')(passport);
+//Passport Middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+
+
 //Set public folder
 app.use(express.static(path.join(__dirname,'public')));
 
@@ -75,7 +85,10 @@ app.use(function (req, res, next) {
   next();
 });
 
-
+app.get('*',function(req,res,next){
+  res.locals.user = req.user || null;
+  next();
+});
 
 //home route
 app.get('/', function(req, res){
